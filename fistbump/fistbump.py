@@ -124,9 +124,10 @@ def main():
         print(f"######### File: {file}")
         print(content)
         print()
-    ok = input("Proceed with changes and tagging? [y/N] ") == "y"
+    prompt = "Proceed with changes and tagging? [y/N]" if not args.pre else "Tagging won't be done because of --pre. Proceed with changes?  [y/N]"
+    ok = input(prompt) == "y"
     if not ok:
-        print("Aborted")
+        print("Aborted by user request")
         return
     commit_needed = False
     for file, content in updates.items():
