@@ -124,7 +124,6 @@ def main():
         print(f"######### File: {file}")
         print(content)
         print()
-    print(updates)
     ok = input("Proceed with changes and tagging? [y/N] ") == "y"
     if not ok:
         print("Aborted")
