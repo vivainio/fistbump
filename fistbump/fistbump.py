@@ -124,7 +124,7 @@ def main():
         print(f"######### File: {file}")
         print(content)
         print()
-    prompt = "Proceed with changes and tagging? [y/N]" if not args.pre else "Tagging won't be done because of --pre. Proceed with changes?  [y/N]"
+    prompt = "Proceed with changes and tagging? [y/N] " if not args.pre else "Tagging won't be done because of --pre. Proceed with changes? [y/N] "
     ok = input(prompt) == "y"
     if not ok:
         print("Aborted by user request")
