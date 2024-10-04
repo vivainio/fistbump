@@ -120,6 +120,10 @@ def main():
         subprocess.run(cmd, check=True)
 
     updates = collect_file_updates(f"{prefix}{new_version}")
+    for file, content in updates.items():
+        print(f"######### File: {file}")
+        print(content)
+        print()
     print(updates)
     ok = input("Proceed with changes and tagging? [y/N] ") == "y"
     if not ok:
