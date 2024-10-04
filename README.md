@@ -44,7 +44,7 @@ version = "1.2.0"
 ...
 
 
-Proceed with changes and tagging? [y/N]y
+Proceed with changes and tagging? [y/N] y
 Updating pyproject.toml
 git add pyproject.toml
 [main bbeb2c0] Bump version to 1.2.0
