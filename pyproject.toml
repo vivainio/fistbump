@@ -1,16 +1,9 @@
 [build-system]
 build-backend = "setuptools.build_meta"
-requires = ["setuptools", "setuptools-git-versioning"]
+requires = ["setuptools"]
 
 [tool.setuptools.packages.find]
 include = ["fistbump*"]
-
-
-[tool.setuptools-git-versioning]
-enabled = true
-template = "{tag}.{ccount}"
-dev_template = "{tag}.{ccount}"
-dirty_template = "{tag}.{ccount}"
 
 [project]
 name = "fistbump"

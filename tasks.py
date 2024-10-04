@@ -22,6 +22,10 @@ def do_test(args) -> None:
     c("pytest")
 
 
+def do_publish(args) -> None:
+    c("python -m build")
+    c("twine upload dist/*")
+
 def default() -> None:
     show_help()
 

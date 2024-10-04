@@ -114,6 +114,11 @@ def main():
         )
         return
 
+    ran_commands = []
+    def run_command(cmd):
+        ran_commands.append(" ".join(cmd))
+        subprocess.run(cmd, check=True)
+
     updates = collect_file_updates(f"{prefix}{new_version}")
     print(updates)
     ok = input("Proceed with changes and tagging? [y/N] ") == "y"
@@ -127,16 +132,21 @@ def main():
             Path(file).write_text(content)
             if is_file_tracked_by_git(file):
                 print("git add", file)
-                subprocess.run(["git", "add", file], check=True)
+                run_command(["git", "add", file])
                 commit_needed = True
             else:
                 print(f"File {file} is not tracked by git, skipping add")
 
     if commit_needed:
-        subprocess.run(
-            ["git", "commit", "-m", f"Bump version to {new_version}"], check=True
+        run_command(
+            ["git", "commit", "-m", f"Bump version to {new_version}"]
         )
     if not args.pre:
-        subprocess.run(["git", "tag", new_version_tag], check=True)
+        run_command(["git", "tag", new_version_tag])
     else:
         print("Pre-release version, not tagging")
+
+    print("All done!")
+    print("Commands ran:")
+    for cmd in ran_commands:
+        print(cmd)
