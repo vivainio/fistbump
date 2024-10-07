@@ -59,6 +59,8 @@ def collect_file_updates(new_version: str):
             updates["pyproject.toml"] = new_cont
     return updates
 
+def get_version():
+    return open(Path(__file__).absolute().parent / "version.txt").read().strip()
 
 def main():
     parser = ArgumentParser()
@@ -66,6 +68,7 @@ def main():
     parser.add_argument("--minor", help="Bump minor version", action="store_true")
     parser.add_argument("--major", help="Bump major version", action="store_true")
     parser.add_argument("--patch", help="Bump patch version", action="store_true")
+    parser.add_argument("--version", "-v", help="Show the version of fistbump itself", action="store_true")
     parser.add_argument(
         "--pre",
         help="Create a pre-release version. Changes will NOT be committed or tagged. The minor version will be bumped and the pre-release tag will be set to 'dev'",
@@ -86,9 +89,13 @@ def main():
     if current_tag is None:
         print("No tags found")
         return
+    args = parser.parse_args()
+    if args.version:
+        print("fistbump " + get_version())
+        return
+
     parsed_version, prefix = parse_version(current_tag)
 
-    args = parser.parse_args()
     print(f"Current version: {prefix}{parsed_version}")
 
     if args.minor:

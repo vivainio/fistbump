@@ -37,6 +37,9 @@ ignore = [
     "ISC001",  # Single-line implicit string concatenation
 ]
 
+[tool.setuptools.package-data]
+fistbump = ["version.txt"]
+
 [tool.pytest.ini_options]
 filterwarnings = "ignore:.*:DeprecationWarning"
 junit_family = "xunit1"
