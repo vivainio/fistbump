@@ -152,7 +152,7 @@ def main():
             check_dry=True
         )
     if not args.pre:
-        run_command(["git", "tag", new_version_tag])
+        run_command(["git", "tag", new_version_tag], check_dry=True)
     else:
         print("Pre-release version, not tagging")
 
