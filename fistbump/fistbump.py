@@ -14,6 +14,7 @@ def git_check_tagged() -> bool:
     except subprocess.CalledProcessError:
         return False
 
+
 def git_find_tag():
     try:
         return (
@@ -67,8 +68,10 @@ def collect_file_updates(new_version: str):
             updates["pyproject.toml"] = new_cont
     return updates
 
+
 def get_version():
     return open(Path(__file__).absolute().parent / "version.txt").read().strip()
+
 
 def main():
     parser = ArgumentParser()
@@ -76,8 +79,17 @@ def main():
     parser.add_argument("--minor", help="Bump minor version", action="store_true")
     parser.add_argument("--major", help="Bump major version", action="store_true")
     parser.add_argument("--patch", help="Bump patch version", action="store_true")
-    parser.add_argument("--set-version", help="Set the version directly to a specific value, instead of bumping", type=str)
-    parser.add_argument("--version", "-v", help="Show the version of fistbump itself", action="store_true")
+    parser.add_argument(
+        "--set-version",
+        help="Set the version directly to a specific value, instead of bumping",
+        type=str,
+    )
+    parser.add_argument(
+        "--version",
+        "-v",
+        help="Show the version of fistbump itself",
+        action="store_true",
+    )
     parser.add_argument(
         "--pre",
         help="Create a pre-release version. Changes will NOT be committed or tagged. The minor version will be bumped and the pre-release tag will be set to 'dev'",
@@ -93,7 +105,11 @@ def main():
         help="Dry run. Do not modify anything, just show what would be done",
         action="store_true",
     )
-    parser.add_argument("--check", help="Check if the repository is properly tagged before publishing. Returns error if it's not.", action="store_true")
+    parser.add_argument(
+        "--check",
+        help="Check if the repository is properly tagged before publishing. Returns error if it's not.",
+        action="store_true",
+    )
 
     args = parser.parse_args()
     if args.version:
@@ -108,12 +124,11 @@ def main():
             print("Current version is not tagged, need to run 'fistbump' first")
             sys.exit(2)
         return 0
-    
+
     current_tag = git_find_tag()
     if current_tag is None:
         print("No tags found")
         return
-
 
     parsed_version, prefix = parse_version(current_tag)
     print(f"Current version: {prefix}{parsed_version}")
@@ -129,7 +144,9 @@ def main():
     elif args.pre:
         new_version = parsed_version.bump_minor().bump_prerelease("dev")
     else:
-        print("No version bump requested, consider --major, --minor, --patch, --set-version or --pre")
+        print(
+            "No version bump requested, consider --major, --minor, --patch, --set-version or --pre"
+        )
         return None
 
     new_version_tag = f"{prefix}{new_version}"
@@ -138,13 +155,15 @@ def main():
         print(f"New tag: {new_version_tag}")
 
     ran_commands = []
+
     def run_command(cmd, check_dry=False):
         if check_dry and args.dry:
             print("DRY RUN:", " ".join(cmd))
             return
-        ran_commands.append(" ".join(cmd))
+        # we don't log commands that are run even in dry runs, as non-mutating
+        if not check_dry:
+            ran_commands.append(" ".join(cmd))
         subprocess.run(cmd, check=True)
-
 
     if not is_working_directory_clean():
         run_command(["git", "status", "-s"])
@@ -156,13 +175,16 @@ def main():
             )
             return
 
-
     updates = collect_file_updates(f"{prefix}{new_version}")
     for file, content in updates.items():
         print(f"######### File: {file}")
         print(content)
         print()
-    prompt = "Proceed with changes and tagging? [y/N] " if not args.pre else "Tagging won't be done because of --pre. Proceed with changes? [y/N] "
+    prompt = (
+        "Proceed with changes and tagging? [y/N] "
+        if not args.pre
+        else "Tagging won't be done because of --pre. Proceed with changes? [y/N] "
+    )
     ok = input(prompt) == "y"
     if not ok:
         print("Aborted by user request")
@@ -174,15 +196,16 @@ def main():
             Path(file).write_text(content)
             if is_file_tracked_by_git(file) and not args.pre:
                 print("git add", file)
-                run_command(["git", "add", file], )
+                run_command(
+                    ["git", "add", file],
+                )
                 commit_needed = True
             else:
                 print(f"File {file} is not tracked by git, skipping add")
 
     if commit_needed:
         run_command(
-            ["git", "commit", "-m", f"Bump version to {new_version}"],
-            check_dry=True
+            ["git", "commit", "-m", f"Bump version to {new_version}"], check_dry=True
         )
     if not args.pre:
         run_command(["git", "tag", new_version_tag], check_dry=True)
