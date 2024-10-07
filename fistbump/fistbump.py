@@ -68,7 +68,7 @@ def main():
     parser.add_argument("--patch", help="Bump patch version", action="store_true")
     parser.add_argument(
         "--pre",
-        help="Create a pre-release version. Changes will NOT be committed or tagged",
+        help="Create a pre-release version. Changes will NOT be committed or tagged. The minor version will be bumped and the pre-release tag will be set to 'dev'",
         action="store_true",
     )
     parser.add_argument(
@@ -98,9 +98,9 @@ def main():
     elif args.patch:
         new_version = parsed_version.bump_patch()
     elif args.pre:
-        new_version = parsed_version.bump_prerelease("dev")
+        new_version = parsed_version.bump_minor().bump_prerelease("dev")
     else:
-        print("No version bump requested, consider --major, --minor or --patch")
+        print("No version bump requested, consider --major, --minor, --patch or --pre")
         return
 
     new_version_tag = f"{prefix}{new_version}"
@@ -108,16 +108,21 @@ def main():
     if str(new_version) != new_version_tag:
         print(f"New tag: {new_version_tag}")
 
+    ran_commands = []
+    def run_command(cmd, check_dry=False):
+        if check_dry and args.dry:
+            print("DRY RUN:", " ".join(cmd))
+            return
+        ran_commands.append(" ".join(cmd))
+        subprocess.run(cmd, check=True)
+
     if not is_working_directory_clean() and not args.force:
         print(
             "Working directory is not clean, commit changes before proceeding or use the --force"
         )
+        run_command(["git", "status", "-s"])
         return
 
-    ran_commands = []
-    def run_command(cmd):
-        ran_commands.append(" ".join(cmd))
-        subprocess.run(cmd, check=True)
 
     updates = collect_file_updates(f"{prefix}{new_version}")
     for file, content in updates.items():
@@ -136,14 +141,15 @@ def main():
             Path(file).write_text(content)
             if is_file_tracked_by_git(file):
                 print("git add", file)
-                run_command(["git", "add", file])
+                run_command(["git", "add", file], )
                 commit_needed = True
             else:
                 print(f"File {file} is not tracked by git, skipping add")
 
     if commit_needed:
         run_command(
-            ["git", "commit", "-m", f"Bump version to {new_version}"]
+            ["git", "commit", "-m", f"Bump version to {new_version}"],
+            check_dry=True
         )
     if not args.pre:
         run_command(["git", "tag", new_version_tag])
