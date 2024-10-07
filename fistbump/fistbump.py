@@ -6,6 +6,14 @@ from pathlib import Path
 import re
 
 
+def git_check_tagged() -> bool:
+    try:
+        got = subprocess.check_output(["git", "describe", "--tags"], text=True).strip()
+        print("Got:", got)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
 def git_find_tag():
     try:
         return (
@@ -84,18 +92,27 @@ def main():
         help="Dry run. Do not modify anything, just show what would be done",
         action="store_true",
     )
+    parser.add_argument("--check", help="Check if the repository is properly tagged before publishing. Returns error if it's not.", action="store_true")
 
-    current_tag = git_find_tag()
-    if current_tag is None:
-        print("No tags found")
-        return
     args = parser.parse_args()
     if args.version:
         print("fistbump " + get_version())
         return
 
-    parsed_version, prefix = parse_version(current_tag)
+    if args.check:
+        if not git_check_tagged():
+            print("Current version is not tagged, need to run 'fistbump' first")
 
+            return 2
+        return 0
+    
+    current_tag = git_find_tag()
+    if current_tag is None:
+        print("No tags found")
+        return
+
+
+    parsed_version, prefix = parse_version(current_tag)
     print(f"Current version: {prefix}{parsed_version}")
 
     if args.minor:
