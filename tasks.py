@@ -23,6 +23,8 @@ def do_test(args) -> None:
 
 
 def do_publish(args) -> None:
+    shutil.rmtree("dist", ignore_errors=True)
+    c("fistbump --check")
     c("python -m build")
     c("twine upload dist/*")
 

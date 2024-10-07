@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 import glob
 import subprocess
+import sys
 import semver
 from pathlib import Path
 import re
@@ -9,8 +10,7 @@ import re
 def git_check_tagged() -> bool:
     try:
         got = subprocess.check_output(["git", "describe", "--tags"], text=True).strip()
-        print("Got:", got)
-        return True
+        return not "-" in got
     except subprocess.CalledProcessError:
         return False
 
@@ -102,8 +102,7 @@ def main():
     if args.check:
         if not git_check_tagged():
             print("Current version is not tagged, need to run 'fistbump' first")
-
-            return 2
+            sys.exit(2)
         return 0
     
     current_tag = git_find_tag()
