@@ -139,12 +139,16 @@ def main():
         ran_commands.append(" ".join(cmd))
         subprocess.run(cmd, check=True)
 
-    if not is_working_directory_clean() and not args.force:
-        print(
-            "Working directory is not clean, commit changes before proceeding or use the --force"
-        )
+
+    if not is_working_directory_clean():
         run_command(["git", "status", "-s"])
-        return
+        if args.pre:
+            print("Working directory is not clean, but proceeding because of --pre")
+        elif not args.force:
+            print(
+                "Working directory is not clean, commit changes before proceeding or use the --force"
+            )
+            return
 
 
     updates = collect_file_updates(f"{prefix}{new_version}")
@@ -162,7 +166,7 @@ def main():
         print(f"Updating {file}")
         if not args.dry:
             Path(file).write_text(content)
-            if is_file_tracked_by_git(file):
+            if is_file_tracked_by_git(file) and not args.pre:
                 print("git add", file)
                 run_command(["git", "add", file], )
                 commit_needed = True
