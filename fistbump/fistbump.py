@@ -76,6 +76,7 @@ def main():
     parser.add_argument("--minor", help="Bump minor version", action="store_true")
     parser.add_argument("--major", help="Bump major version", action="store_true")
     parser.add_argument("--patch", help="Bump patch version", action="store_true")
+    parser.add_argument("--set-version", help="Set the version directly to a specific value, instead of bumping", type=str)
     parser.add_argument("--version", "-v", help="Show the version of fistbump itself", action="store_true")
     parser.add_argument(
         "--pre",
@@ -100,6 +101,9 @@ def main():
         return
 
     if args.check:
+        if not is_working_directory_clean():
+            print("Working directory is not clean, commit changes before proceeding")
+            sys.exit(2)
         if not git_check_tagged():
             print("Current version is not tagged, need to run 'fistbump' first")
             sys.exit(2)
@@ -120,11 +124,13 @@ def main():
         new_version = parsed_version.bump_major()
     elif args.patch:
         new_version = parsed_version.bump_patch()
+    elif args.set_version:
+        new_version = semver.VersionInfo.parse(args.set_version)
     elif args.pre:
         new_version = parsed_version.bump_minor().bump_prerelease("dev")
     else:
-        print("No version bump requested, consider --major, --minor, --patch or --pre")
-        return
+        print("No version bump requested, consider --major, --minor, --patch, --set-version or --pre")
+        return None
 
     new_version_tag = f"{prefix}{new_version}"
     print(f"New version: {new_version}")
