@@ -1,10 +1,11 @@
-from argparse import ArgumentParser
 import glob
+import re
 import subprocess
 import sys
-import semver
+from argparse import ArgumentParser
 from pathlib import Path
-import re
+
+import semver
 
 
 def git_check_tagged() -> bool:
@@ -43,7 +44,7 @@ def is_working_directory_clean():
         return False
 
 
-def is_file_tracked_by_git(file: str):
+def is_path_tracked_by_git(file: str):
     try:
         subprocess.check_output(
             ["git", "ls-files", "--error-unmatch", file], stderr=subprocess.DEVNULL
@@ -55,8 +56,10 @@ def is_file_tracked_by_git(file: str):
 
 def collect_file_updates(new_version: str):
     updates = {}
-    version_files = glob.glob("**/version.txt", recursive=True)
-    updates.update({f: new_version for f in version_files})
+    version_files = Path().glob("**/version.txt")
+    updates.update(
+        {f: new_version for f in version_files if is_path_tracked_by_git(f.parent)}
+    )
 
     toml = Path("pyproject.toml")
     if toml.exists():
@@ -162,7 +165,7 @@ def main():
             return
         # we don't log commands that are run even in dry runs, as non-mutating
         if not check_dry:
-            ran_commands.append(" ".join(cmd))
+            ran_commands.append(" ".join(map(str, cmd)))
         subprocess.run(cmd, check=True)
 
     if not is_working_directory_clean():
@@ -175,7 +178,7 @@ def main():
             )
             return
 
-    updates = collect_file_updates(f"{prefix}{new_version}")
+    updates = collect_file_updates(str(new_version))
     for file, content in updates.items():
         print(f"######### File: {file}")
         print(content)
@@ -194,7 +197,7 @@ def main():
         print(f"Updating {file}")
         if not args.dry:
             Path(file).write_text(content)
-            if is_file_tracked_by_git(file) and not args.pre:
+            if is_path_tracked_by_git(file) and not args.pre:
                 print("git add", file)
                 run_command(
                     ["git", "add", file],
