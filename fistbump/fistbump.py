@@ -27,6 +27,26 @@ def git_find_tag():
         return None
 
 
+def git_get_head_tags():
+    try:
+        return (
+            subprocess.check_output(["git", "tag", "--points-at", "HEAD"])
+            .strip()
+            .decode("utf-8")
+            .split("\n")
+        )
+    except subprocess.CalledProcessError:
+        return []
+
+
+def is_version_parseable(tag: str) -> bool:
+    try:
+        parse_version(tag)
+        return True
+    except ValueError:
+        return False
+
+
 def parse_version(tag: str) -> tuple[semver.VersionInfo, str]:
     prefix = ""
     if tag.startswith("v"):
@@ -178,6 +198,13 @@ def main():
             )
             return
 
+    current_head_tags = git_get_head_tags()
+    if not args.force and any(is_version_parseable(tag) for tag in current_head_tags):
+        print(
+            "Current HEAD is tagged with a version tag(s). Refusing to proceed without --force: "
+            + ",".join(current_head_tags)
+        )
+        return
     updates = collect_file_updates(str(new_version))
     for file, content in updates.items():
         print(f"######### File: {file}")
